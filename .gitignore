@@ -7,6 +7,11 @@ build/
 dist/
 *.png
 torch.egg-info/
+pytorch_model.to
+models/depth-semantic-fully-conv/
+test_*
+models/.giosaveesKTwg
+.vscode
 */**/__pycache__
 torch/version.py
 torch/csrc/generic/TensorMethods.cpp
@@ -41,3 +46,5 @@ test/.coverage
 test/data/legacy_serialized.pt
 *~
 .idea
+nyu_images
+temp

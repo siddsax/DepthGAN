@@ -40,7 +40,8 @@ class BaseModel():
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 
         if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
+            	print("========================== Loading Model ====================")
+		self.load_networks(opt.which_epoch)
         self.print_networks(opt.verbose)
 
     # make models eval mode during test time
@@ -50,11 +51,17 @@ class BaseModel():
                 net = getattr(self, 'net' + name)
                 net.eval()
 
+    def train(self):
+        for name in self.model_names:
+            if isinstance(name, str):
+                net = getattr(self, 'net' + name)
+                net.train()
+
     # used in test time, wrapping `forward` in no_grad() so we don't save
     # intermediate steps for backprop
     def test(self):
         with torch.no_grad():
-            self.forward()
+            self.test_forward()
 
     # get image paths
     def get_image_paths(self):

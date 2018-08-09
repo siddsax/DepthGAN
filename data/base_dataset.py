@@ -24,21 +24,21 @@ class BaseDataset(data.Dataset):
 def get_transform(opt):
     transform_list = []
     if opt.resize_or_crop == 'resize_and_crop':
-        osize = [opt.loadSize, opt.loadSize]
+        osize = [opt.loadSize_1, opt.loadSize_2]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
-        transform_list.append(transforms.RandomCrop(opt.fineSize))
-    elif opt.resize_or_crop == 'crop':
-        transform_list.append(transforms.RandomCrop(opt.fineSize))
-    elif opt.resize_or_crop == 'scale_width':
-        transform_list.append(transforms.Lambda(
-            lambda img: __scale_width(img, opt.fineSize)))
-    elif opt.resize_or_crop == 'scale_width_and_crop':
-        transform_list.append(transforms.Lambda(
-            lambda img: __scale_width(img, opt.loadSize)))
-        transform_list.append(transforms.RandomCrop(opt.fineSize))
-    elif opt.resize_or_crop == 'none':
-        transform_list.append(transforms.Lambda(
-            lambda img: __adjust(img)))
+        transform_list.append(transforms.RandomCrop((opt.fineSize_1, opt.fineSize_2 )))
+    # elif opt.resize_or_crop == 'crop':
+    #     transform_list.append(transforms.RandomCrop(opt.fineSize))
+    # elif opt.resize_or_crop == 'scale_width':
+    #     transform_list.append(transforms.Lambda(
+    #         lambda img: __scale_width(img, opt.fineSize)))
+    # elif opt.resize_or_crop == 'scale_width_and_crop':
+    #     transform_list.append(transforms.Lambda(
+    #         lambda img: __scale_width(img, opt.loadSize)))
+    #     transform_list.append(transforms.RandomCrop(opt.fineSize))
+    # elif opt.resize_or_crop == 'none':
+    #     transform_list.append(transforms.Lambda(
+    #         lambda img: __adjust(img)))
     else:
         raise ValueError('--resize_or_crop %s is not a valid option.' % opt.resize_or_crop)
 

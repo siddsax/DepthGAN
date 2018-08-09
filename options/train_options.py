@@ -24,5 +24,13 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_policy', type=str, default='lambda', help='learning rate policy: lambda|step|plateau')
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
 
-        self.isTrain = True
+        parser.add_argument('--ntest', type=int, default=float("inf"), help='# of test examples.')
+        parser.add_argument('--results_dir', type=str, default='./results/', help='saves results here.')
+        parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')
+        
+        
+        parser.add_argument('--how_many', type=int, default=20, help='how many test images to run')
+        
+
+	self.isTrain = True
         return parser

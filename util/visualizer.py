@@ -5,7 +5,7 @@ import time
 from . import util
 from . import html
 from scipy.misc import imresize
-
+import requests
 
 # save image to the disk
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
@@ -61,7 +61,7 @@ class Visualizer():
 
     def throw_visdom_connection_error(self): 
         print('\n\nCould not connect to Visdom server (https://github.com/facebookresearch/visdom) for displaying training progress.\nYou can suppress connection to Visdom using the option --display_id -1. To install visdom, run \n$ pip install visdom\n, and start the server by \n$ python -m visdom.server.\n\n')
-        exit(1)
+        #exit(1)
 
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, save_result):
@@ -101,8 +101,8 @@ class Visualizer():
                     label_html = '<table>%s</table>' % label_html
                     self.vis.text(table_css + label_html, win=self.display_id + 2,
                                   opts=dict(title=title + ' labels'))
-                except ConnectionError:
-                    self.throw_visdom_connection_error()
+                except:
+                    print('\n\nCould not connect to Visdom server (https://github.com/facebookresearch/visdom) for displaying training progress.\nYou can suppress connection to Visdom using the option --display_id -1. To install visdom, run \n$ pip install visdom\n, and start the server by \n$ python -m visdom.server.\n\n')
 
             else:
                 idx = 1
@@ -149,13 +149,14 @@ class Visualizer():
                     'xlabel': 'epoch',
                     'ylabel': 'loss'},
                 win=self.display_id)
-        except ConnectionError:
-            self.throw_visdom_connection_error()
+        except:
+            print('\n\nCould not connect to Visdom server (https://github.com/facebookresearch/visdom) for displaying training progress.\nYou can suppress connection to Visdom using the option --display_id -1. To install visdom, run \n$ pip install visdom\n, and start the server by \n$ python -m visdom.server.\n\n')
 
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, i, losses, t, t_data):
-        message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, i, t, t_data)
-        for k, v in losses.items():
+        #message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, i, t, t_data)
+        message = '(epoch: %d, iters: %d) ' % (epoch, i)
+	for k, v in losses.items():
             message += '%s: %.3f ' % (k, v)
 
         print(message)
