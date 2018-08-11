@@ -27,7 +27,17 @@ class Pix2PixModel(BaseModel):
         self.isTrain = opt.isTrain
         self.opt = opt
 	# specify the training losses you want to print out. The program will call base_model.get_current_losses
-        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake', 'G_scale', 'G_hu', 'G_berHu', 'G_rmse', 'G_rel', 'G_t_1', 'G_t_2', 'G_t_3']
+        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake', 'G_rmse', 'G_rel', 'G_t_1', 'G_t_2', 'G_t_3']
+        self.loss_names_plt = ['G_GAN', 'G_L1', 'D_real', 'D_fake']#, 'G_scale', 'G_hu', 'G_berHu', 'G_rmse', 'G_rel', 'G_t_1', 'G_t_2', 'G_t_3']
+        if(self.opt.loss2==1):
+            self.loss_names.append('G_scale')
+            self.loss_names_plt.append('G_scale')
+        elif(self.opt.loss2==2):
+            self.loss_names.append('G_hu')
+            self.loss_names_plt.append('G_hu')
+        elif(self.opt.loss2==3):
+            self.loss_names.append('G_berHu')
+            self.loss_names_plt.append('G_berHu')
         #self.loss_names = ['G_GAN', 'G_L1', 'G_scale', 'G_hu', 'G_rev', 'G_rmse', 'G_abs', 'G_loss_sqrel', 'G_t_1', 'G_t_2', 'G_t_3']
 	# specify the images you want to save/display. The program will call base_model.get_current_visuals
         self.visual_names = ['real_A', 'fake_B', 'real_B']
@@ -81,15 +91,10 @@ class Pix2PixModel(BaseModel):
         self.real_A = self.upsample(self.real_A)
         self.real_B = self.upsample(self.real_B)
         self.fake_B = self.upsample(self.fake_B)
-    # def set_ratio(self, loadSize):
-    #     self.N = loadSize*loadSize
-    #     self.ratio = 420*320.0/(loadSize*loadSize)
     def backward_D(self):
         # Fake
         # stop backprop to the generator by detaching fake_B
         fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1))
-	#import pdb
-	#pdb.set_trace()
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
@@ -98,7 +103,6 @@ class Pix2PixModel(BaseModel):
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
 
-        # Combined loss
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
 
         self.loss_D.backward()
@@ -143,21 +147,12 @@ class Pix2PixModel(BaseModel):
     def AbsoluteRelativeDifference(self):
         output = (self.fake_B + 1.0)/2
         gt = (self.real_B + 1.0)/2
-        # if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
-        #     gt = torch.max((gt+1.0)/2, torch.cuda.FloatTensor([1.0 / 255.0]))
-        # else:
-        #     gt = torch.max((gt+1.0)/2, torch.FloatTensor([1.0 / 255.0]))
-
         diff = torch.mean(torch.abs(output - gt) / gt)
         return diff
 
     def SquaredRelativeDifference(self):
         output = (self.fake_B + 1.0)/2
         gt = (self.real_B + 1.0)/2
-        # if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
-        #     gt = torch.max((gt+1.0)/2, torch.cuda.FloatTensor([1.0 / 255.0]))
-        # else:
-        #     gt = torch.max((gt+1.0)/2, torch.FloatTensor([1.0 / 255.0]))
         d = output - gt
         diff = torch.mean((d * d) / gt)
         return diff
@@ -206,6 +201,9 @@ class Pix2PixModel(BaseModel):
         return self.criterionL1(self.fake_B, self.real_B)
 
     def findEvalLosses(self):
+        self.real_A = self.upsample(self.real_A)
+        self.real_B = self.upsample(self.real_B)
+        self.fake_B = self.upsample(self.fake_B)
         # --------- eval losses ------ no lambda ------------------------
         self.loss_G_rmse = np.array(self.RootMeanSquaredError().data)
         self.loss_G_rel = np.array(self.AbsoluteRelativeDifference().data)
@@ -234,13 +232,13 @@ class Pix2PixModel(BaseModel):
 
         self.loss_G = self.loss_G_GAN
         if(self.opt.loss2==0):
-            self.loss_G += self.loss_G_L1
+            self.loss_G = self.loss_G_L1 + self.loss_G_GAN
         elif(self.opt.loss2==1):
-            self.loss_G += self.loss_G_scale
+            self.loss_G = self.loss_G_scale + self.loss_G_GAN
         elif(self.opt.loss2==2):
-            self.loss_G += self.loss_G_hu
+            self.loss_G = self.loss_G_hu + self.loss_G_GAN
         elif(self.opt.loss2==3):
-            self.loss_G += self.loss_G_berHu
+            self.loss_G = self.loss_G_berHu + self.loss_G_GAN
 
         self.loss_G.backward()
 
@@ -253,9 +251,6 @@ class Pix2PixModel(BaseModel):
         self.backward_D()
         self.optimizer_D.step()
 
-        self.real_A = self.upsample(self.real_A)
-        self.real_B = self.upsample(self.real_B)
-        self.fake_B = self.upsample(self.fake_B)
         # update G
         self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()

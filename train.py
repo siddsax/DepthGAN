@@ -9,9 +9,6 @@ if __name__ == '__main__':
   opt = TrainOptions().parse()
   data_loader = CreateDataLoader(opt)
   dataset = data_loader.load_data()
-  # print("-----")
-  # print(dataset.dataloader.dataset)
-  # pdb.set_trace()
   dataset_size = len(data_loader)
   print('#training images = %d' % dataset_size)
 
@@ -36,25 +33,24 @@ if __name__ == '__main__':
         model.optimize_parameters()
         t_data = iter_start_time - iter_data_time
         iter_data_time = time.time()
-
         if total_steps % opt.display_freq == 0:
             save_result = total_steps % opt.update_html_freq == 0
             visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
 
-        if total_steps % opt.print_freq == 0 or i==0:
-            losses = model.get_current_losses()
+        if total_steps % opt.print_freq == 0:
+            losses, losses_plt = model.get_current_losses()
             t = (time.time() - iter_start_time) / opt.batchSize
             visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data)
             if(losses['G_L1'] < G_L1_best):
                 G_L1_best = losses['G_L1']
                 print("=========== GOAT =================")
-            test(opt, model=model, file=f)
-            f.close()
-            f = open('test_acc_' + opt.name, 'a')
-            model.train()
+            # test(opt, model=model, file=f)
+            # f.close()
+            # f = open('test_acc_' + opt.name, 'a')
+            # model.train()
             if opt.display_id > 0:
-                visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)
-        if total_steps % opt.save_latest_freq == 0  or i==0:
+                visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses_plt)
+        if total_steps % opt.save_latest_freq == 0:
             print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_steps))
             model.save_networks('latest')
             test(opt, model=model, file=f)
@@ -64,7 +60,7 @@ if __name__ == '__main__':
         if(epoch==opt.epoch_count):
             break
 
-        if epoch % opt.save_epoch_freq == 0 or i==0:
+        if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' %
                     (epoch, total_steps))
             model.save_networks('latest')

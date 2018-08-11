@@ -123,14 +123,20 @@ class GANLoss(nn.Module):
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
             self.loss = nn.MSELoss()
+            # print("AAAAAAAAAAAAA")
+            # exit()
         else:
             self.loss = nn.BCELoss()
+            # print("BBBBBBBBBBBBBBBB")
+            # exit()
 
     def get_target_tensor(self, input, target_is_real):
         if target_is_real:
             target_tensor = self.real_label
         else:
             target_tensor = self.fake_label
+        # import pdb
+        # pdb.set_trace()
         return target_tensor.expand_as(input)
 
     def __call__(self, input, target_is_real):

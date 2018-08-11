@@ -231,7 +231,7 @@ class Gen_depth(nn.Module):
         self.dropout = nn.Dropout2d(p=1)
 
         # self.upsample = nn.UpsamplingBilinear2d(size = (640,480))
-        self.upsample = nn.UpsamplingBilinear2d(size = (228, 304))
+        self.upsample = nn.UpsamplingBilinear2d(size = (256, 256))
         self.tanh = nn.Tanh()
 
     def make_proj_layer(self, block, in_channels, d1, d2, stride = 1, pad=0):
@@ -273,7 +273,7 @@ class Gen_depth(nn.Module):
 
         out_1 = self.conv3(out_1)
         out_1 = self.upsample(out_1)
-        out_1 = out_1.expand(1, 3, 228, 304)
+        out_1 = out_1.expand(1, 3, out_1.shape[-2], out_1.shape[-1])
         out_1 = self.tanh(out_1)
 
         return out_1

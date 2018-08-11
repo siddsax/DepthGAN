@@ -36,8 +36,8 @@ def test(opt, model, file=None):
         model.findEvalLosses()
         visuals = model.get_current_visuals()
         img_path = model.get_image_paths()
-        if i % 5 == 0 and i !=0:
-            print('processing (%04d)-th image... %s' % (i, img_path))
+        # if i % 5 == 0 and i !=0:
+        #     print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
         arr = updateLosses(model) if i==0  else updateLosses(model, arr)
         # i = 5 if a > 7 else 0
@@ -60,3 +60,4 @@ if __name__ == '__main__':
 
 
 # DP used: 20 RMSE : 2.1986363351345064  Abs : 0.893079374730587  Thresh1 : 0.21322943793402777  Thresh2 : 0.41924327256944444  Thresh3 : 0.6183082139756945  
+# DP used: 20 RMSE : 0.8820810839533806  Rel : 0.2345905341207981  Thresh1 : 0.61558837890625  Thresh2 : 0.8547732204861113  Thresh3 : 0.9602861870659722  

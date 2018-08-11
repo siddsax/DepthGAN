@@ -40,9 +40,9 @@ class BaseModel():
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 
         if not self.isTrain or opt.continue_train:
-            	print("========================== Loading Model ====================")
-		self.load_networks(opt.which_epoch)
-        self.print_networks(opt.verbose)
+            print("========================== Loading Model ====================")
+            self.load_networks(opt.which_epoch)
+            self.print_networks(opt.verbose)
 
     # make models eval mode during test time
     def eval(self):
@@ -92,7 +92,13 @@ class BaseModel():
             if isinstance(name, str):
                 # float(...) works for both scalar tensor and float number
                 errors_ret[name] = float(getattr(self, 'loss_' + name))
-        return errors_ret
+        errors_ret_plt = OrderedDict()
+        for name in self.loss_names_plt:
+            if isinstance(name, str):
+                # float(...) works for both scalar tensor and float number
+                errors_ret_plt[name] = float(getattr(self, 'loss_' + name))
+
+        return errors_ret, errors_ret_plt
 
     # save models to the disk
     def save_networks(self, which_epoch):
