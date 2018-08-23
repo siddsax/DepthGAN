@@ -246,7 +246,10 @@ class Pix2PixModel(BaseModel):
         elif(self.opt.loss2==3):
             self.loss_G = self.loss_G_berHu + self.loss_G_GAN
         elif(self.opt.loss2==4):
-            self.loss_G = self.loss_G_L2# + self.loss_G_GAN
+            if self.opt.which_model_netG != 'Gen_depth':
+                self.loss_G = self.loss_G_L2 + self.loss_G_GAN
+            else:
+                self.loss_G = self.loss_G_L2
         self.loss_G.backward()
 
 
@@ -258,7 +261,9 @@ class Pix2PixModel(BaseModel):
             self.optimizer_D.zero_grad()
             self.backward_D()
             self.optimizer_D.step()
-        # update G
+        else:
+            self.loss_names.remove('D_real')
+            self.loss_names_plt.remove('D_real')
         self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()
         self.backward_G()
