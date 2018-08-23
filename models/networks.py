@@ -3,7 +3,9 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-from depth_model import Gen_depth 
+from depth_model import Gen_depth
+from torch.autograd import Variable
+
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -82,8 +84,11 @@ def init_weights(net, init_type='normal', gain=0.02):
 def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
-        net.cuda()#.to(gpu_ids[0])
-        #net = torch.nn.DataParallel(net, gpu_ids)
+        if(torch.__version__ == '0.3.0.post4'):
+            net.cuda(gpu_ids[0])#.to(gpu_ids[0])
+        else:
+            net.to(gpu_ids[0])
+            net = torch.nn.DataParallel(net, gpu_ids)
     init_weights(net, init_type, gain=init_gain)
     return net
 
@@ -136,10 +141,17 @@ def define_D(input_nc, ndf, which_model_netD,
 # but it abstracts away the need to create the target label tensor
 # that has the same size as the input
 class GANLoss(nn.Module):
-    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0, tensor=torch.FloatTensor):
         super(GANLoss, self).__init__()
-        self.register_buffer('real_label', torch.tensor(target_real_label))
-        self.register_buffer('fake_label', torch.tensor(target_fake_label))
+        if(torch.__version__ == '0.3.0.post4'):
+            self.real_label = target_real_label
+            self.fake_label = target_fake_label
+            self.real_label_var = None
+            self.fake_label_var = None
+            self.Tensor = tensor
+        else:
+            self.register_buffer('real_label', torch.tensor(target_real_label))
+            self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
             self.loss = nn.MSELoss()
             # print("AAAAAAAAAAAAA")
@@ -150,10 +162,28 @@ class GANLoss(nn.Module):
             # exit()
 
     def get_target_tensor(self, input, target_is_real):
-        if target_is_real:
-            target_tensor = self.real_label
+        if(torch.__version__ == '0.3.0.post4'):
+            target_tensor = None
+            if target_is_real:
+                create_label = ((self.real_label_var is None) or
+                                (self.real_label_var.numel() != input.numel()))
+                if create_label:
+                    real_tensor = self.Tensor(input.size()).fill_(self.real_label)
+                    self.real_label_var = Variable(real_tensor, requires_grad=False)
+                target_tensor = self.real_label_var
+            else:
+                create_label = ((self.fake_label_var is None) or
+                                (self.fake_label_var.numel() != input.numel()))
+                if create_label:
+                    fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
+                    self.fake_label_var = Variable(fake_tensor, requires_grad=False)
+                target_tensor = self.fake_label_var
+            return target_tensor
         else:
-            target_tensor = self.fake_label
+            if target_is_real:
+                target_tensor = self.real_label
+            else:
+                target_tensor = self.fake_label
         # import pdb
         # pdb.set_trace()
         return target_tensor.expand_as(input)

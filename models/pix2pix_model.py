@@ -1,6 +1,7 @@
 import torch
 from util.image_pool import ImagePool
 from .base_model import BaseModel
+from torch.autograd import Variable
 from . import networks
 import pdb
 import numpy as np
@@ -63,7 +64,10 @@ class Pix2PixModel(BaseModel):
         if self.isTrain:
             self.fake_AB_pool = ImagePool(opt.pool_size)
             # define loss functions
-            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
+            if(torch.__version__ == '0.3.0.post4'):
+                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
+            else:
+                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
             self.criterionL1 = torch.nn.L1Loss()
 
             # initialize optimizers
@@ -78,16 +82,35 @@ class Pix2PixModel(BaseModel):
         # self.set_ratio(opt.loadSize)
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
-        self.real_A = input['A' if AtoB else 'B'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device)
+        if(torch.__version__ == '0.3.0.post4'):
+            input_A = input['A' if AtoB else 'B']
+            input_B = input['B' if AtoB else 'A']
+            if len(self.gpu_ids) > 0:
+                input_A = input_A.cuda(self.gpu_ids[0], async=True)
+                input_B = input_B.cuda(self.gpu_ids[0], async=True)
+            self.input_A = input_A
+            self.input_B = input_B
+        else:
+            self.real_A = input['A' if AtoB else 'B'].to(self.device)
+            self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
 
     def forward(self):
-        self.fake_B = self.netG(self.real_A)
+        if(torch.__version__ == '0.3.0.post4'):
+            self.real_A = Variable(self.input_A)
+            self.fake_B = self.netG(self.real_A)
+            self.real_B = Variable(self.input_B)
+        else:            
+            self.fake_B = self.netG(self.real_A)
 
     def test_forward(self):
-        self.fake_B = self.netG(self.real_A)
+        if(torch.__version__ == '0.3.0.post4'):
+            self.real_A = Variable(self.input_A, volatile=True)
+            self.fake_B = self.netG(self.real_A)
+            self.real_B = Variable(self.input_B, volatile=True)
+        else:
+            self.fake_B = self.netG(self.real_A)
         self.real_A = self.upsample(self.real_A)
         self.real_B = self.upsample(self.real_B)
         self.fake_B = self.upsample(self.fake_B)
@@ -107,17 +130,15 @@ class Pix2PixModel(BaseModel):
 
         self.loss_D.backward()
 
-    def log_func(self, depth):
+    # def log_func(self, depth):
 
-	if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
-        	scalar = torch.cuda.FloatTensor([1.0 / 255.0])
-		depth = torch.max(depth, scalar.expand_as(depth))
-	else:
-		scalar = torch.FloatTensor([1.0 / 255.0])
-		depth = torch.max(depth, scalar.expand_as(depth))
-
-
-        return 0.179581 * torch.log(depth) + 1
+    #     if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
+    #         scalar = Variable(torch.cuda.FloatTensor([1.0 / 255.0]))
+    #         depth = torch.max(depth, scalar.expand_as(depth))
+    #     else:
+    #         scalar = torch.FloatTensor([1.0 / 255.0])
+    #         depth = torch.max(depth, scalar.expand_as(depth))
+    #         return 0.179581 * torch.log(depth) + 1
 
 # def LogDepth(depth):
 #     depth = np.maximum(depth, 1.0 / 255.0)
@@ -133,11 +154,11 @@ class Pix2PixModel(BaseModel):
 # 	return diff - relDiff
 
 
-    def scale_loss(self):
-        d = 10*self.log_func((self.fake_B+1.0)/2) - 10*self.log_func((self.real_B+1.0)/2) # see util.util tensor2im
-        t1 = d - d.mean()
-        t2 = (t1*t1).mean()
-        return t2
+    # def scale_loss(self):
+    #     d = 10*self.log_func((self.fake_B+1.0)/2) - 10*self.log_func((self.real_B+1.0)/2) # see util.util tensor2im
+    #     t1 = d - d.mean()
+    #     t2 = (t1*t1).mean()
+    #     return t2
 
     def RootMeanSquaredError(self):
     	d = (self.fake_B - self.real_B)*10.0/2 # see util.util tensor2im, 10 is to scale to meters, not needed in cases its canceled out
@@ -200,6 +221,9 @@ class Pix2PixModel(BaseModel):
     def L1(self):
         return self.criterionL1(self.fake_B, self.real_B)
 
+    def L2(self):
+        return torch.nn.functional.mse_loss(self.fake_B, self.real_B)
+
     def findEvalLosses(self):
         self.real_A = self.upsample(self.real_A)
         self.real_B = self.upsample(self.real_B)
@@ -223,7 +247,8 @@ class Pix2PixModel(BaseModel):
 
         # Second, G(A) = B
         self.loss_G_L1 = self.L1() * self.opt.lambda_L1
-        self.loss_G_scale = self.scale_loss() * self.opt.lambda_L1
+        self.loss_G_L2 = self.L2() * self.opt.lambda_L1
+        # self.loss_G_scale = self.scale_loss() * self.opt.lambda_L1
         self.loss_G_hu = self.hu_loss() * self.opt.lambda_L1
         self.loss_G_berHu = self.berHu_loss() * self.opt.lambda_L1
 
@@ -234,23 +259,34 @@ class Pix2PixModel(BaseModel):
         if(self.opt.loss2==0):
             self.loss_G = self.loss_G_L1 + self.loss_G_GAN
         elif(self.opt.loss2==1):
-            self.loss_G = self.loss_G_scale + self.loss_G_GAN
+            print("******* issue in log_func, not resolved*************")
+            exit()
+            # self.loss_G = self.loss_G_scale + self.loss_G_GAN
         elif(self.opt.loss2==2):
             self.loss_G = self.loss_G_hu + self.loss_G_GAN
         elif(self.opt.loss2==3):
             self.loss_G = self.loss_G_berHu + self.loss_G_GAN
-
+        elif(self.opt.loss2==4):
+            self.loss_G = self.loss_G_L2# + self.loss_G_GAN
         self.loss_G.backward()
 
 
     def optimize_parameters(self):
         self.forward()
-        # update D
-        self.set_requires_grad(self.netD, True)
-        self.optimizer_D.zero_grad()
-        self.backward_D()
-        self.optimizer_D.step()
-
+        # # update D
+        if self.opt.which_model_netG != 'Gen_depth':
+            self.set_requires_grad(self.netD, True)
+            self.optimizer_D.zero_grad()
+            self.backward_D()
+            self.optimizer_D.step()
+        else:
+            try:
+                self.loss_names.remove('D_real')
+                self.loss_names_plt.remove('D_real')
+                self.loss_names.remove('D_fake')
+                self.loss_names_plt.remove('D_fake')
+            except:
+                a = 0
         # update G
         self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()

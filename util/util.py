@@ -10,6 +10,8 @@ import os
 def tensor2im(input_image, imtype=np.uint8):
     if isinstance(input_image, torch.Tensor):
         image_tensor = input_image.data
+    elif isinstance(input_image, torch.autograd.variable.Variable):
+        image_tensor = input_image.data
     else:
         return input_image
     image_numpy = image_tensor[0].cpu().float().numpy()
