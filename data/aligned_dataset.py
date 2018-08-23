@@ -2,10 +2,10 @@ import os.path
 import random
 import torchvision.transforms as transforms
 import torch
-from data.base_dataset import BaseDataset
+from data.base_dataset import BaseDataset,get_transform
 from data.image_folder import make_dataset
 from PIL import Image
-
+import random
 
 class AlignedDataset(BaseDataset):
     @staticmethod
@@ -18,6 +18,8 @@ class AlignedDataset(BaseDataset):
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)
         self.AB_paths = sorted(make_dataset(self.dir_AB))
         assert(opt.resize_or_crop == 'resize_and_crop')
+        self.transform = get_transform(opt)
+
 
     def __getitem__(self, index):
         AB_path = self.AB_paths[index]
@@ -26,6 +28,15 @@ class AlignedDataset(BaseDataset):
         w2 = int(w / 2)
         A = AB.crop((0, 0, w2, h)).resize((self.opt.loadSize_1, self.opt.loadSize_2), Image.BICUBIC)
         B = AB.crop((w2, 0, w, h)).resize((self.opt.loadSize_1, self.opt.loadSize_2), Image.BICUBIC)
+        if self.opt.isTrain and not self.opt.no_flip:
+            # print("="*1000)
+            transform = transforms.RandomHorizontalFlip()
+            seed = random.randint(0,2**32)
+            random.seed(seed)
+            A = transform(A)
+            random.seed(seed)
+            B = transform(B)
+            # transform = transforms.Compose([transforms.RandomHorizontalFlip()])
         A = transforms.ToTensor()(A)
         B = transforms.ToTensor()(B)
         # print(A.shape)
@@ -44,10 +55,15 @@ class AlignedDataset(BaseDataset):
         # print(self.opt.fineSize_2)
         # print("+===================")
         # exit()
-
-        A = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A)
-        B = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(B)
-
+        A = 2*(A) - 1#transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A)
+        B = 2*(B) - 1#transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(B)
+        # print("Amax {}".format(A.max()))
+        # print("Amean {}".format(A.mean()))
+        # print("Amin {}".format(A.min()))
+        # print("Bmax {}".format(B.max()))
+        # print("Bmean {}".format(B.mean()))
+        # print("Bmin {}".format(B.min()))
+        # exit()
         if self.opt.which_direction == 'BtoA':
             input_nc = self.opt.output_nc
             output_nc = self.opt.input_nc

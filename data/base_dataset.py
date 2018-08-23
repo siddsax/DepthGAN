@@ -27,27 +27,28 @@ def get_transform(opt):
         osize = [opt.loadSize_1, opt.loadSize_2]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
         transform_list.append(transforms.RandomCrop((opt.fineSize_1, opt.fineSize_2 )))
-    # elif opt.resize_or_crop == 'crop':
-    #     transform_list.append(transforms.RandomCrop(opt.fineSize))
-    # elif opt.resize_or_crop == 'scale_width':
-    #     transform_list.append(transforms.Lambda(
-    #         lambda img: __scale_width(img, opt.fineSize)))
-    # elif opt.resize_or_crop == 'scale_width_and_crop':
-    #     transform_list.append(transforms.Lambda(
-    #         lambda img: __scale_width(img, opt.loadSize)))
-    #     transform_list.append(transforms.RandomCrop(opt.fineSize))
-    # elif opt.resize_or_crop == 'none':
-    #     transform_list.append(transforms.Lambda(
-    #         lambda img: __adjust(img)))
+    elif opt.resize_or_crop == 'crop':
+        transform_list.append(transforms.RandomCrop(opt.fineSize))
+    elif opt.resize_or_crop == 'scale_width':
+        transform_list.append(transforms.Lambda(
+            lambda img: __scale_width(img, opt.fineSize)))
+    elif opt.resize_or_crop == 'scale_width_and_crop':
+        transform_list.append(transforms.Lambda(
+            lambda img: __scale_width(img, opt.loadSize)))
+        transform_list.append(transforms.RandomCrop(opt.fineSize))
+    elif opt.resize_or_crop == 'none':
+        transform_list.append(transforms.Lambda(
+            lambda img: __adjust(img)))
     else:
         raise ValueError('--resize_or_crop %s is not a valid option.' % opt.resize_or_crop)
 
-    if opt.isTrain and not opt.no_flip:
-        transform_list.append(transforms.RandomHorizontalFlip())
-
-    transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
+    # if opt.isTrain and not opt.no_flip:
+    #     print("="*1000)
+    #     # exit()
+        # transform_list.append(transforms.RandomHorizontalFlip())
+    transform_list += [transforms.ToTensor()]
+                    #    transforms.Normalize((0.5, 0.5, 0.5),
+                                            # (0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
 
 # just modify the width and height to be multiple of 4

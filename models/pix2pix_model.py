@@ -38,6 +38,9 @@ class Pix2PixModel(BaseModel):
         elif(self.opt.loss2==3):
             self.loss_names.append('G_berHu')
             self.loss_names_plt.append('G_berHu')
+        elif(self.opt.loss2==4):
+            self.loss_names.append('G_L2')
+            self.loss_names_plt.append('G_L2')
         #self.loss_names = ['G_GAN', 'G_L1', 'G_scale', 'G_hu', 'G_rev', 'G_rmse', 'G_abs', 'G_loss_sqrel', 'G_t_1', 'G_t_2', 'G_t_3']
 	# specify the images you want to save/display. The program will call base_model.get_current_visuals
         self.visual_names = ['real_A', 'fake_B', 'real_B']
@@ -56,8 +59,7 @@ class Pix2PixModel(BaseModel):
                                           opt.which_model_netD,
                                           opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        self.upsample = torch.nn.UpsamplingBilinear2d(size = (640,480))
-        # self.upsample = torch.nn.Upsample(size = (640,480))
+        self.upsample = torch.nn.UpsamplingBilinear2d(size = (480,640))
         self.criterionL1 = torch.nn.L1Loss()
         
         if self.isTrain:
@@ -200,6 +202,9 @@ class Pix2PixModel(BaseModel):
     def L1(self):
         return self.criterionL1(self.fake_B, self.real_B)
 
+    def L2(self):
+        return torch.nn.functional.mse_loss(self.fake_B, self.real_B)
+
     def findEvalLosses(self):
         self.real_A = self.upsample(self.real_A)
         self.real_B = self.upsample(self.real_B)
@@ -223,6 +228,7 @@ class Pix2PixModel(BaseModel):
 
         # Second, G(A) = B
         self.loss_G_L1 = self.L1() * self.opt.lambda_L1
+        self.loss_G_L2 = self.L2() * self.opt.lambda_L1
         self.loss_G_scale = self.scale_loss() * self.opt.lambda_L1
         self.loss_G_hu = self.hu_loss() * self.opt.lambda_L1
         self.loss_G_berHu = self.berHu_loss() * self.opt.lambda_L1
@@ -239,18 +245,19 @@ class Pix2PixModel(BaseModel):
             self.loss_G = self.loss_G_hu + self.loss_G_GAN
         elif(self.opt.loss2==3):
             self.loss_G = self.loss_G_berHu + self.loss_G_GAN
-
+        elif(self.opt.loss2==4):
+            self.loss_G = self.loss_G_L2# + self.loss_G_GAN
         self.loss_G.backward()
 
 
     def optimize_parameters(self):
         self.forward()
-        # update D
-        self.set_requires_grad(self.netD, True)
-        self.optimizer_D.zero_grad()
-        self.backward_D()
-        self.optimizer_D.step()
-
+        # # update D
+        if self.opt.which_model_netG != 'Gen_depth':
+            self.set_requires_grad(self.netD, True)
+            self.optimizer_D.zero_grad()
+            self.backward_D()
+            self.optimizer_D.step()
         # update G
         self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()
