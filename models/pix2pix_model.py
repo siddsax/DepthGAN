@@ -262,8 +262,13 @@ class Pix2PixModel(BaseModel):
             self.backward_D()
             self.optimizer_D.step()
         else:
-            self.loss_names.remove('D_real')
-            self.loss_names_plt.remove('D_real')
+            try:
+                self.loss_names.remove('D_real')
+                self.loss_names_plt.remove('D_real')
+                self.loss_names.remove('D_fake')
+                self.loss_names_plt.remove('D_fake')
+            except:
+                a = 0
         self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()
         self.backward_G()
