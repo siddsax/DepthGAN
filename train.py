@@ -44,10 +44,6 @@ if __name__ == '__main__':
             if(losses['G_L1'] < G_L1_best):
                 G_L1_best = losses['G_L1']
                 print("=========== GOAT =================")
-            # test(opt, model=model, file=f)
-            # f.close()
-            # f = open('test_acc_' + opt.name, 'a')
-            # model.train()
             if opt.display_id > 0:
                 visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses_plt)
         if total_steps % opt.save_latest_freq == 0:

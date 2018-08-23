@@ -22,30 +22,34 @@ def updateLosses(model, arr=None, div=None, file=None):
             file.write( prints + '\n')
 
 def test(opt, model, file=None):
-    data_loader = CreateDataLoader(opt)
-    dataset = data_loader.load_data()
-    # create website
-    web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
-    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
-    model.eval()
-    for i, data in enumerate(dataset):
-        if i >= opt.how_many:
-            break
-        model.set_input(data)
-        model.test()
-        model.findEvalLosses()
-        visuals = model.get_current_visuals()
-        img_path = model.get_image_paths()
-        # if i % 5 == 0 and i !=0:
-        #     print('processing (%04d)-th image... %s' % (i, img_path))
-        if(torch.__version__ != '0.3.0.post4'):
-            save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
-        arr = updateLosses(model) if i==0  else updateLosses(model, arr)
-        # i = 5 if a > 7 else 0
+    phases = ['test', 'train']
+    opt.no_flip = True
+    for phase in phases:
+        opt.phase = phase
+        if(phase == 'test'):
+            opt.how_many = 1000
+        else:
+            opt.how_many = 20
+        data_loader = CreateDataLoader(opt)
+        dataset = data_loader.load_data()
+        # create website
+        web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
+        webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
+        # model.eval()
+        for i, data in enumerate(dataset):
+            if i >= opt.how_many:
+                break
+            model.set_input(data)
+            model.test()
+            model.findEvalLosses()
+            if(torch.__version__ != '0.3.0.post4'):
+                save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
+            arr = updateLosses(model) if i==0  else updateLosses(model, arr)
+            # i = 5 if a > 7 else 0
 
-    webpage.save()
-    updateLosses(model, arr, i, file=file)
-
+        webpage.save()
+        updateLosses(model, arr, i, file=file)
+    opt.no_flip = False
 if __name__ == '__main__':
 
     opt = TestOptions().parse()
@@ -60,5 +64,7 @@ if __name__ == '__main__':
     test(opt, model)
 
 
-# DP used: 20 RMSE : 2.1986363351345064  Abs : 0.893079374730587  Thresh1 : 0.21322943793402777  Thresh2 : 0.41924327256944444  Thresh3 : 0.6183082139756945  
-# DP used: 20 RMSE : 0.8820810839533806  Rel : 0.2345905341207981  Thresh1 : 0.61558837890625  Thresh2 : 0.8547732204861113  Thresh3 : 0.9602861870659722  
+# SOTA: 653 RMSE : 0.573  Rel : 0.127  Thresh1 : 0.811  Thresh2 : 0.953  Thresh3 : 0.988
+# DP used: 653 RMSE : 0.9059211268998215  Rel : 0.2531337386330912  Thresh1 : 0.4879080608861876  Thresh2 : 0.8350951587624426  Thresh3 : 0.9522043177455556
+# DP used: 653 RMSE : 0.8662465251811066  Rel : 0.2496004984592862  Thresh1 : 0.5208516598737661  Thresh2 : 0.8526720607745238  Thresh3 : 0.9569496537747787  
+

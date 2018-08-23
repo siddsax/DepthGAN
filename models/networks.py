@@ -108,7 +108,7 @@ def define_G(opt, input_nc, output_nc, ngf, which_model_netG, norm='batch', use_
     elif which_model_netG == 'Gen_depth':
         netG = Gen_depth(opt.batchSize)
         print(Gen_depth)
-        netG.load_state_dict(torch.load('pytorch_model.to'))
+        # netG.load_state_dict(torch.load('pytorch_model.to'))
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
     return init_net(netG, init_type, init_gain, gpu_ids)

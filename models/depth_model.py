@@ -189,8 +189,8 @@ class Gen_depth(nn.Module):
         self.relu = nn.LeakyReLU(0.2, True)#nn.ReLU(inplace=True)
         self.max_pool = nn.MaxPool2d(3,stride=2)
 
-	block1 = ResidualBlock
-	block2 = UpProj_Block
+        block1 = ResidualBlock
+        block2 = UpProj_Block
 
         self.proj_layer1 = self.make_proj_layer(block1, 64 , d1 = 64, d2 = 256, stride = 1)
         self.skip_layer1_1 = self.make_skip_layer(block1, 256, d1 = 64, d2 = 256, stride=1)
@@ -221,16 +221,7 @@ class Gen_depth(nn.Module):
         self.up_conv4 = self.make_up_conv_layer(block2, 128, 64, self.batch_size)
 
         self.conv3 = nn.Conv2d(64,1,3, padding=1)
-
-        # Layers for Semantic Segmentation
-        #self.up_conv5 = self.make_up_conv_layer(block2,128 ,64 ,self.batch_size)
-        #self.conv4 = nn.Conv2d(64,48,3,padding=1)
-        #self.bn4 = nn.BatchNorm2d(48)
-        #self.conv5 = nn.Conv2d(48,38,3,padding=1)
-        #self.bn5 = nn.BatchNorm2d(38)
         self.dropout = nn.Dropout2d(p=1)
-
-        # self.upsample = nn.UpsamplingBilinear2d(size = (640,480))
         self.upsample = nn.UpsamplingBilinear2d(size = (256, 256))
         self.tanh = nn.Tanh()
 

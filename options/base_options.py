@@ -13,8 +13,8 @@ class BaseOptions():
     def initialize(self, parser):
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
-        parser.add_argument('--loadSize_1', type=int, default=256, help='scale images to this size')
-        parser.add_argument('--loadSize_2', type=int, default=256, help='scale images to this size')
+        parser.add_argument('--loadSize_1', type=int, default=282, help='scale images to this size')
+        parser.add_argument('--loadSize_2', type=int, default=282, help='scale images to this size')
         parser.add_argument('--fineSize_1', type=int, default=256, help='then crop to this size')
         parser.add_argument('--fineSize_2', type=int, default=256, help='then crop to this size')
         parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels')
@@ -38,15 +38,16 @@ class BaseOptions():
         parser.add_argument('--display_id', type=int, default=1, help='window id of the web display')
         parser.add_argument('--display_server', type=str, default="http://localhost", help='visdom server of the web display')
         parser.add_argument('--display_port', type=int, default=8097, help='visdom port of the web display')
-        parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
         parser.add_argument('--resize_or_crop', type=str, default='resize_and_crop', help='scaling and cropping of images at load time [resize_and_crop|crop|scale_width|scale_width_and_crop]')
-        parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data augmentation')
         parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal|xavier|kaiming|orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{which_model_netG}_size{loadSize}')
+        # Tried experimenting-- here default same as pix2pix
         parser.add_argument('--loss2', type=int, default=0, help='scaling factor for normal, xavier and orthogonal.')
+        parser.add_argument('--no_dropout', type=int, default=1, help='no dropout for the generator')
+        parser.add_argument('--no_flip', type=int, default=1, help='if specified, do not flip the images for data augmentation')
 	self.initialized = True
         return parser
 
