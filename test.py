@@ -46,11 +46,11 @@ def test(opt, model, file=None):
             model.findEvalLosses()
             # import pdb
             # pdb.set_trace()
-            # visuals = model.get_current_visuals()
-            # img_path = model.get_image_paths()
+            visuals = model.get_current_visuals()
+            img_path = model.get_image_paths()
             # if i % 5 == 0 and i !=0:
             #     print('processing (%04d)-th image... %s' % (i, img_path))
-            # save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
+            save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
             arr = updateLosses(model) if i==0  else updateLosses(model, arr)
             # i = 5 if a > 7 else 0
 
@@ -73,5 +73,5 @@ if __name__ == '__main__':
 
 # SOTA: 653 RMSE : 0.573  Rel : 0.127  Thresh1 : 0.811  Thresh2 : 0.953  Thresh3 : 0.988
 # DP used: 653 RMSE : 0.9059211268998215  Rel : 0.2531337386330912  Thresh1 : 0.4879080608861876  Thresh2 : 0.8350951587624426  Thresh3 : 0.9522043177455556
-# DP used: 653 RMSE : 0.8662465251811066  Rel : 0.2496004984592862  Thresh1 : 0.5208516598737661  Thresh2 : 0.8526720607745238  Thresh3 : 0.9569496537747787  
+# DP used: 653 RMSE : 0.8487154162541648  Rel : 0.2383133495771319  Thresh1 : 0.5352931399018421  Thresh2 : 0.8552751988684704  Thresh3 : 0.9594732079238986  
 
