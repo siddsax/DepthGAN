@@ -160,9 +160,21 @@ class Pix2PixModel(BaseModel):
         return diff
 
     def Threshold(self, threshold):
-        output = (self.fake_B.data.cpu().numpy() + 1.0)*10.0/2
-        gt = (self.real_B.data.cpu().numpy() + 1.0)*10.0/2
-        withinThresholdCount = np.where(np.maximum(output / gt, gt / output) < threshold)[0].size
+        output = (self.fake_B.data.cpu().numpy() + 1.0)/2 # convert to 0-1
+        gt = (self.real_B.data.cpu().numpy() + 1.0)/2
+        output = np.maximum(output, 1.0 / 255.0) # remove elements = 0
+        gt = np.maximum(gt, 1.0 / 255.0)
+        output = output*10.0 #conversion to meters "needed"
+        gt = gt*10.0
+
+        bb = np.maximum(output / gt, gt / output)
+        # import pdb
+        # pdb.set_trace()
+        kk = np.argwhere(np.maximum(output / gt, gt / output) < threshold)
+        withinThresholdCount = len(kk)
+        # print(withinThresholdCount)
+        # print(gt.size)
+        # print(gt.shape)
         return (withinThresholdCount / float(gt.size))
 
         # if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():

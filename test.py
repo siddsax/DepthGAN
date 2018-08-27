@@ -24,6 +24,8 @@ def updateLosses(model, arr=None, div=None, file=None):
 def test(opt, model, file=None):
     phases = ['test', 'train']
     opt.no_flip = True
+    a, b = opt.loadSize_1, opt.loadSize_2
+    opt.loadSize_1, opt.loadSize_2 = opt.fineSize_1, opt.fineSize_2
     for phase in phases:
         opt.phase = phase
         if(phase == 'test'):
@@ -38,9 +40,11 @@ def test(opt, model, file=None):
         web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
         webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
         # model.eval()
+        div = 0.0
         for i, data in enumerate(dataset):
             if i >= opt.how_many:
                 break
+            div +=1.0
             model.set_input(data)
             model.test()
             model.findEvalLosses()
@@ -55,8 +59,9 @@ def test(opt, model, file=None):
             # i = 5 if a > 7 else 0
 
         webpage.save()
-        updateLosses(model, arr, i, file=file)
+        updateLosses(model, arr, div, file=file)
     opt.no_flip = False
+    opt.loadSize_1, opt.loadSize_2 = a, b
 if __name__ == '__main__':
 
     opt = TestOptions().parse()
@@ -73,5 +78,5 @@ if __name__ == '__main__':
 
 # SOTA: 653 RMSE : 0.573  Rel : 0.127  Thresh1 : 0.811  Thresh2 : 0.953  Thresh3 : 0.988
 # DP used: 653 RMSE : 0.9059211268998215  Rel : 0.2531337386330912  Thresh1 : 0.4879080608861876  Thresh2 : 0.8350951587624426  Thresh3 : 0.9522043177455556
-# DP used: 653 RMSE : 0.8487154162541648  Rel : 0.2383133495771319  Thresh1 : 0.5352931399018421  Thresh2 : 0.8552751988684704  Thresh3 : 0.9594732079238986  
+# DP used: 654.0 RMSE : 0.8257715280085164  Rel : 0.23869676805394688  Thresh1 : 0.5820129896417344  Thresh2 : 0.8659238088791215  Thresh3 : 0.9614844413651028
 

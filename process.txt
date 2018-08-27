@@ -1,0 +1,4 @@
+1) Finetune the model with 2 depth maps
+2) Run on the depth_2
+3) Train net AtoB and BtoA
+4) Cycle through predictions 
