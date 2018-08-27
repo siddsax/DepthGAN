@@ -19,7 +19,8 @@ class BaseModel():
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
-        self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
+        self.Tensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
+        #self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
         self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)
         if opt.resize_or_crop != 'scale_width':
             torch.backends.cudnn.benchmark = True
@@ -60,8 +61,8 @@ class BaseModel():
     # used in test time, wrapping `forward` in no_grad() so we don't save
     # intermediate steps for backprop
     def test(self):
-        with torch.no_grad():
-            self.test_forward()
+        # with torch.no_grad():
+        self.test_forward()
 
     # get image paths
     def get_image_paths(self):

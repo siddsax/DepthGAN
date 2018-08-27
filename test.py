@@ -5,7 +5,7 @@ from data import CreateDataLoader
 from models import create_model
 from util.visualizer import save_images
 from util import html
-
+import torch
 def updateLosses(model, arr=None, div=None, file=None):
     if div is None:
         if arr is None:
@@ -30,9 +30,7 @@ def test(opt, model, file=None):
         opt.phase = phase
         if(phase == 'test'):
             opt.how_many = 1000
-            #opt.batchSize = 1
         else:
-            #opt.batchSize = 1
             opt.how_many = 20
         data_loader = CreateDataLoader(opt)
         dataset = data_loader.load_data()
@@ -48,13 +46,10 @@ def test(opt, model, file=None):
             model.set_input(data)
             model.test()
             model.findEvalLosses()
-            # import pdb
-            # pdb.set_trace()
-            visuals = model.get_current_visuals()
-            img_path = model.get_image_paths()
-            # if i % 5 == 0 and i !=0:
-            #     print('processing (%04d)-th image... %s' % (i, img_path))
-            save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
+            if(torch.__version__ != '0.3.0.post4'):
+                visuals = model.get_current_visuals()
+                img_path = model.get_image_paths()
+                save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
             arr = updateLosses(model) if i==0  else updateLosses(model, arr)
             # i = 5 if a > 7 else 0
 
