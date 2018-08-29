@@ -32,25 +32,16 @@ if not os.path.exists(opt.dataroot + "/seq/test"):
 if not os.path.exists(opt.dataroot + "/seq/result"):
     os.makedirs(opt.dataroot + "/seq/result")
 
-# bashCommand = "cp " + opt.dataroot + "/D1/images/*_fake* " + opt.dataroot + "/seq/D1"
-# process = subprocess.Popen(bashCommand, stdout=subprocess.PIPE, shell=True,)
-# bashCommand = "cp " + opt.dataroot + "/D2/images/*_fake* " + opt.dataroot + "/seq/D2"
-# process = subprocess.Popen(bashCommand, stdout=subprocess.PIPE, shell=True,)
-# bashCommand = "cp " + opt.dataroot + "/D2/images/*_real_B* " + opt.dataroot + "/seq/DR"
-# process = subprocess.Popen(bashCommand, stdout=subprocess.PIPE, shell=True,)
-
 dFiles1 = [f for f in listdir(opt.dataroot + '/seq/D1') if isfile(join(opt.dataroot + '/seq/D1', f))]
 dFiles2 = [f for f in listdir(opt.dataroot + '/seq/D2') if isfile(join(opt.dataroot + '/seq/D2', f))]
 dFilesR = [f for f in listdir(opt.dataroot + '/seq/DR') if isfile(join(opt.dataroot + '/seq/DR', f))]
-
 dFiles1.sort()
 dFiles2.sort()
 dFilesR.sort()
 numFiles = min(len(dFiles2), len(dFiles1))
-
+home = opt.dataroot
 directions = ['AtoB', 'BtoA']
-opt.niter = 100
-opt.niter_decay = 100
+opt.dataroot = home + '/seq'
 
 models = {}
 opt.which_direction = ['AtoB']
@@ -62,7 +53,10 @@ model2 = create_model(opt)
 model2.setup(opt)
 models['BtoA'] = model2
 
-home = opt.dataroot
+opt.niter = 100
+opt.niter_decay = 100
+opt.continue_train=0
+file = open("Errors_" + opt.name + ".txt", "w+")
 for i in range(numFiles):
   print(home + '/seq/D1/' + dFiles1[i])
   print("="*100)
@@ -71,24 +65,31 @@ for i in range(numFiles):
   fR = cv2.imread(home + '/seq/DR/' +  dFilesR[i])
   cTr = np.concatenate((f1, f2), axis=1)
   cTe = np.concatenate((f2, fR), axis=1)
+  cOriginal = cTe
   cv2.imwrite(home + '/seq/train' + '/img.png', cTr)
   cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
   cv2.imwrite(home + '/seq/result' + '/img_0.png', cTe)
+  file.write( '==========' + str(i) + '==========\n')
+
   for direction in directions:
     opt.which_direction = direction
-    opt.dataroot = home + '/seq'
+    models[direction].opt = opt
+    models[direction].setup(opt)
     models[direction] = train(opt, models[direction])
     opt.which_direction = 'AtoB'
-    for i in range(1, 5):
-        test(opt, models[direction])
+    models[direction].opt = opt
+    for j in range(1, 2):
+        print("================================")
+        losses = test(opt, models[direction], file=file)
         print('results/' + opt.name + '/test_latest/images/img_fake_B.png')
         fo = cv2.imread('results/' + opt.name + '/test_latest/images/img_fake_B.png')
-        cTe = np.concatenate((fo, fR), axis=1)
+        cTe = np.concatenate((f2, fo, fR), axis=1)
         cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
-        cv2.imwrite(home + '/seq/result' + '/img_' + direction + '_' + str(i) + '.png', cTe)
-
-  opt.niter = 5
-  opt.niter_decay = 20
-  exit()
-# for i in range(numFiles)
-# output, error = process.communicate()
+        cv2.imwrite(home + '/seq/result' + '/img_' + str(i) + '_' + direction + '_' + str(j) + '.png', cTe)
+    cv2.imwrite(home + '/seq/test' + '/img.png', cOriginal)
+    file.write( '--------------------\n')
+    opt.niter = 20
+    opt.niter_decay = 20
+    file.write( '====================\n')
+    file.close()
+    file = open("Errors_" + opt.name + ".txt", "a+")
