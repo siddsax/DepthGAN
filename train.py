@@ -69,7 +69,7 @@ def train(opt, model):
             model.train()
             f.close()
             f = open('test_acc_' + opt.name, 'a')
-    
+
     return model
 
 if __name__ == '__main__':
