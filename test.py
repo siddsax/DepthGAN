@@ -6,7 +6,7 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 import torch
-def updateLosses(model, arr=None, div=None, file=None):
+def updateLosses(model, phase, arr=None, div=None, file=None):
     if div is None:
         if arr is None:
             arr = np.zeros(len(model.evalLosses))
@@ -18,8 +18,9 @@ def updateLosses(model, arr=None, div=None, file=None):
         for i, loss in enumerate(model.evalLosses):
             prints += model.evalLossesNames[i] + " : " + str(arr[i]/div) + "  "
         print(prints)
-        if file is not None:
+        if file is not None and phase == 'test':
             file.write( prints + '\n')
+        return arr/div
 
 def test(opt, model, file=None):
     phases = ['test', 'train']
@@ -50,13 +51,17 @@ def test(opt, model, file=None):
                 visuals = model.get_current_visuals()
                 img_path = model.get_image_paths()
                 save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
-            arr = updateLosses(model) if i==0  else updateLosses(model, arr)
+            arr = updateLosses(model, phase) if i==0  else updateLosses(model, phase, arr=arr)
             # i = 5 if a > 7 else 0
 
         webpage.save()
-        updateLosses(model, arr, div, file=file)
+        if(phase == 'test'):
+            arrT = updateLosses(model, phase, arr, div, file=file)
+        else:
+            updateLosses(model, phase, arr, div, file=file)
     opt.no_flip = False
     opt.loadSize_1, opt.loadSize_2 = a, b
+    return arrT
 if __name__ == '__main__':
 
     opt = TestOptions().parse()
