@@ -29,8 +29,8 @@ if not os.path.exists(opt.dataroot + "/seq/train"):
     os.makedirs(opt.dataroot + "/seq/train")
 if not os.path.exists(opt.dataroot + "/seq/test"):
     os.makedirs(opt.dataroot + "/seq/test")
-if not os.path.exists(opt.dataroot + "/seq/result"):
-    os.makedirs(opt.dataroot + "/seq/result")
+if not os.path.exists(opt.dataroot + "/seq/result_" + opt.name):
+    os.makedirs(opt.dataroot + "/seq/result_" + opt.name)
 
 dFiles1 = [f for f in listdir(opt.dataroot + '/seq/D1') if isfile(join(opt.dataroot + '/seq/D1', f))]
 dFiles2 = [f for f in listdir(opt.dataroot + '/seq/D2') if isfile(join(opt.dataroot + '/seq/D2', f))]
@@ -53,8 +53,10 @@ model2 = create_model(opt)
 model2.setup(opt)
 models['BtoA'] = model2
 
-opt.niter = 100
-opt.niter_decay = 100
+opt.niter = 20
+opt.niter_decay = 20
+# opt.niter = 100
+# opt.niter_decay = 100
 opt.continue_train=0
 file = open("Errors_" + opt.name + ".txt", "w+")
 for i in range(numFiles):
@@ -67,7 +69,7 @@ for i in range(numFiles):
     cOriginal = cTe
     cv2.imwrite(home + '/seq/train' + '/img.png', cTr)
     cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
-    cv2.imwrite(home + '/seq/result' + '/img_0.png', cTe)
+    cv2.imwrite(home + '/seq/result_' + opt.name + '/img_0.png', cTe)
     file.write( '==========' + str(i) + '==========\n')
     losses, names = models['AtoB'].findCustomLosses(f2, fR)
     toPrint = ""
@@ -84,9 +86,10 @@ for i in range(numFiles):
             print("================================")
             losses = test(opt, models[direction], file=file)
             fo = cv2.imread('results/' + opt.name + '/test_latest/images/img_fake_B.png')
-            cTe = np.concatenate((f2, fo, fR), axis=1)
+            cTe = np.concatenate((fo, fR), axis=1)
+            cRes = np.concatenate((f2, fo, fR), axis=1)
             cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
-            cv2.imwrite(home + '/seq/result' + '/img_' + str(i) + '_' + direction + '_' + str(j) + '.png', cTe)
+            cv2.imwrite(home + '/seq/result_' + opt.name + '/img_' + str(i) + '_' + direction + '_' + str(j) + '.png', cRes)
         cv2.imwrite(home + '/seq/test' + '/img.png', cOriginal)
         file.write( '--------------------\n')
     opt.niter = 20
@@ -94,3 +97,5 @@ for i in range(numFiles):
     file.write( '====================\n')
     file.close()
     file = open("Errors_" + opt.name + ".txt", "a+")
+
+# srun -t 13:58:00 --mem=24G --gres=gpu:1 --constraint='kepler|pascal' python seqGAN.py --dataroot=./classTranslation --name classRoom_l1_100_2 --continue_train=1 --save_epoch_freq=20 --display_freq=1 --print_freq=1 --how_many=1000 --lambda_L1=100.0

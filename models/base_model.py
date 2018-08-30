@@ -76,7 +76,7 @@ class BaseModel():
     def update_learning_rate(self):
         for scheduler in self.schedulers:
             scheduler.step()
-        lr = self.optimizers[0].param_groups[0]['lr']
+        # lr = self.optimizers[0].param_groups[0]['lr']
         # print('learning rate = %.7f' % lr)
 
     # return visualization images. train.py will display these images, and save the images to a html
