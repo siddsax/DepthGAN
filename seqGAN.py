@@ -58,36 +58,37 @@ opt.niter_decay = 100
 opt.continue_train=0
 file = open("Errors_" + opt.name + ".txt", "w+")
 for i in range(numFiles):
-  print(home + '/seq/D1/' + dFiles1[i])
-  print("="*100)
-  f1 = cv2.imread(home + '/seq/D1/' + dFiles1[i])
-  f2 = cv2.imread(home + '/seq/D2/' +  dFiles2[i])
-  fR = cv2.imread(home + '/seq/DR/' +  dFilesR[i])
-  cTr = np.concatenate((f1, f2), axis=1)
-  cTe = np.concatenate((f2, fR), axis=1)
-  cOriginal = cTe
-  cv2.imwrite(home + '/seq/train' + '/img.png', cTr)
-  cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
-  cv2.imwrite(home + '/seq/result' + '/img_0.png', cTe)
-  file.write( '==========' + str(i) + '==========\n')
-
-  for direction in directions:
-    opt.which_direction = direction
-    models[direction].opt = opt
-    models[direction].setup(opt)
-    models[direction] = train(opt, models[direction])
-    opt.which_direction = 'AtoB'
-    models[direction].opt = opt
-    for j in range(1, 2):
-        print("================================")
-        losses = test(opt, models[direction], file=file)
-        print('results/' + opt.name + '/test_latest/images/img_fake_B.png')
-        fo = cv2.imread('results/' + opt.name + '/test_latest/images/img_fake_B.png')
-        cTe = np.concatenate((f2, fo, fR), axis=1)
-        cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
-        cv2.imwrite(home + '/seq/result' + '/img_' + str(i) + '_' + direction + '_' + str(j) + '.png', cTe)
-    cv2.imwrite(home + '/seq/test' + '/img.png', cOriginal)
-    file.write( '--------------------\n')
+    print('==========' + str(i) + '==========\n')
+    f1 = cv2.imread(home + '/seq/D1/' + dFiles1[i])
+    f2 = cv2.imread(home + '/seq/D2/' +  dFiles2[i])
+    fR = cv2.imread(home + '/seq/DR/' +  dFilesR[i])
+    cTr = np.concatenate((f1, f2), axis=1)
+    cTe = np.concatenate((f2, fR), axis=1)
+    cOriginal = cTe
+    cv2.imwrite(home + '/seq/train' + '/img.png', cTr)
+    cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
+    cv2.imwrite(home + '/seq/result' + '/img_0.png', cTe)
+    file.write( '==========' + str(i) + '==========\n')
+    losses, names = models['AtoB'].findCustomLosses(f2, fR)
+    toPrint = ""
+    for k in range(len(losses)):
+        toPrint += names[k] + " " + str(losses[k]) + " "
+    print(toPrint + " " + "({}, {})".format(home + '/seq/D2/' +  dFiles2[i], home + '/seq/DR/' +  dFilesR[i]))
+    file.write(toPrint + "\n")
+    for direction in directions:
+        opt.which_direction = direction
+        models[direction].setup(opt)
+        models[direction] = train(opt, models[direction])
+        opt.which_direction = 'AtoB'
+        for j in range(1, 2):
+            print("================================")
+            losses = test(opt, models[direction], file=file)
+            fo = cv2.imread('results/' + opt.name + '/test_latest/images/img_fake_B.png')
+            cTe = np.concatenate((f2, fo, fR), axis=1)
+            cv2.imwrite(home + '/seq/test' + '/img.png', cTe)
+            cv2.imwrite(home + '/seq/result' + '/img_' + str(i) + '_' + direction + '_' + str(j) + '.png', cTe)
+        cv2.imwrite(home + '/seq/test' + '/img.png', cOriginal)
+        file.write( '--------------------\n')
     opt.niter = 20
     opt.niter_decay = 20
     file.write( '====================\n')

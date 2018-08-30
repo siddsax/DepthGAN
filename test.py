@@ -23,7 +23,8 @@ def updateLosses(model, phase, arr=None, div=None, file=None):
         return arr/div
 
 def test(opt, model, file=None):
-    phases = ['test', 'train']
+    model.opt = opt
+    phases = ['test']#, 'train']
     opt.no_flip = True
     a, b = opt.loadSize_1, opt.loadSize_2
     opt.loadSize_1, opt.loadSize_2 = opt.fineSize_1, opt.fineSize_2
