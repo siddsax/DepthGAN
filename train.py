@@ -6,6 +6,8 @@ from util.visualizer import Visualizer
 from test import test
 import pdb
 def train(opt, model):
+    l1 = 0
+    flg = 0
     model.opt = opt
     data_loader = CreateDataLoader(opt)
     dataset = data_loader.load_data()
@@ -33,6 +35,11 @@ def train(opt, model):
 
             if total_steps % opt.print_freq == 0:
                 _, losses_plt = model.get_current_losses()
+                if losses_plt['G_L1']-l1 < .01:
+                    flg +=1
+                    l1 = losses_plt['G_L1']
+                    if flg >= 5:
+                        break
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses_plt)
             if total_steps % opt.save_latest_freq == 0:
@@ -44,15 +51,11 @@ def train(opt, model):
             #     f = open('test_acc_' + opt.name, 'a')
             #     model.train()
 
+        model.update_learning_rate()
         if epoch % opt.save_epoch_freq == 0:
             model.save_networks('latest')
             model.save_networks(epoch)
-            model.update_learning_rate()
-            # test(opt, model=model, file=f)
-            # model.train()
-            # f.close()
-            # f = open('test_acc_' + opt.name, 'a')
-            print("++++ End of {} Epochs ++++".format(epoch))
+            print("++++ End of {} Epochs with lr {} ++++".format(epoch, model.optimizers[0].param_groups[0]['lr']))
     return model
 
 if __name__ == '__main__':
