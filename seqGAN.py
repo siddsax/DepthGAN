@@ -98,4 +98,10 @@ for i in range(numFiles):
     file.close()
     file = open("Errors_" + opt.name + ".txt", "a+")
 
+#rmse Orgl 0.282412201111 wtO 0.27085609261 wO 0.248778315004
+#rel Orgl 0.0706886438254 wtO 0.0629697941125 wO 0.0590944112449
+#t1 Orgl 0.960062486221 wtO 0.964832330936 wO 0.972391958085
+#t2 Orgl 0.987742521633 wtO 0.993751033399 wO 0.99699788842
+#t3 Orgl 0.996850284529 wtO 0.9981571215 wO 0.999776699598
+
 # srun -t 13:58:00 --mem=24G --gres=gpu:1 --constraint='kepler|pascal' python seqGAN.py --dataroot=./classTranslation --name classRoom_l1_100_2 --continue_train=1 --save_epoch_freq=20 --display_freq=1 --print_freq=1 --how_many=1000 --lambda_L1=100.0
