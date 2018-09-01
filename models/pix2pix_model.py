@@ -197,23 +197,11 @@ class Pix2PixModel(BaseModel):
         gt = np.maximum(gt, 1.0 / 255.0)
         output = output*10.0 #conversion to meters "needed"
         gt = gt*10.0
-
         bb = np.maximum(output / gt, gt / output)
-        # import pdb
-        # pdb.set_trace()
         kk = np.argwhere(np.maximum(output / gt, gt / output) < threshold)
         withinThresholdCount = len(kk)
-        # print(withinThresholdCount)
-        # print(gt.size)
-        # print(gt.shape)
         return (withinThresholdCount / float(gt.size))
 
-        # if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
-        #     output = torch.max(output, torch.cuda.FloatTensor([1.0 / 255.0])).data
-        #     gt = torch.max(gt, torch.cuda.FloatTensor([1.0 / 255.0])).data
-        # else:
-        #     gt = torch.max(gt, torch.FloatTensor([1.0 / 255.0])).data
-        #     output = torch.max(output, torch.FloatTensor([1.0 / 255.0])).data
 
     # def LogDepth(depth):
     #     depth = np.maximum(depth, 1.0 / 255.0)	
