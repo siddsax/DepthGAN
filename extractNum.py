@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 
-fl = open('Errors_classRoom_l1_100.txt').read().split('\n')
+fl = open('Errors_sci_1.txt').read().split('\n')
 # print(fl)
 
 losses = []
@@ -46,6 +46,11 @@ for i, line in enumerate(fl):
 
 d2 = np.array(losses)
 
+d1_o = d1
+d1 = d1[~np.isinf(d1_o).any(axis=1)]
+d2 = d2[~np.isinf(d1_o).any(axis=1)]
+Origlosses = Origlosses[~np.isinf(d1_o).any(axis=1)]
+
 x = np.arange(d2.shape[0])
 plt.plot(x, Origlosses[:,0],label="orig")
 plt.plot(x, d1[:,0],label="d1")
@@ -54,13 +59,14 @@ plt.plot(x, d2[:,0],label="d2")
 # Origlosses[:,0].reshape((63,1)),
 names = ['rmse', 'rel', 't1', 't2', 't3']
 toPrint = ""
+numF = d1.shape[0]
 for i in range(5):
     if i < 2:
-        RMSEmn = np.amin(np.concatenate((Origlosses[:,i].reshape((63,1)), d1[:,i].reshape((63,1)), d2[:,i].reshape((63,1))), axis=1), axis=1).mean()
-        RMSEmnwO = np.amin(np.concatenate((d1[:,i].reshape((63,1)), d2[:,i].reshape((63,1))), axis=1), axis=1).mean()
+        RMSEmn = np.amin(np.concatenate((Origlosses[:,i].reshape((numF,1)), d1[:,i].reshape((numF,1)), d2[:,i].reshape((numF,1))), axis=1), axis=1).mean()
+        RMSEmnwO = np.amin(np.concatenate((d1[:,i].reshape((numF,1)), d2[:,i].reshape((numF,1))), axis=1), axis=1).mean()
     else:
-        RMSEmn = np.amax(np.concatenate((Origlosses[:,i].reshape((63,1)), d1[:,i].reshape((63,1)), d2[:,i].reshape((63,1))), axis=1), axis=1).mean()
-        RMSEmnwO = np.amax(np.concatenate((d1[:,i].reshape((63,1)), d2[:,i].reshape((63,1))), axis=1), axis=1).mean()
+        RMSEmn = np.amax(np.concatenate((Origlosses[:,i].reshape((numF,1)), d1[:,i].reshape((numF,1)), d2[:,i].reshape((numF,1))), axis=1), axis=1).mean()
+        RMSEmnwO = np.amax(np.concatenate((d1[:,i].reshape((numF,1)), d2[:,i].reshape((numF,1))), axis=1), axis=1).mean()
     Org = Origlosses[:,i].mean()
     toPrint += "{} Orgl {} wtO {} wO {}\n".format(names[i], Org, RMSEmnwO, RMSEmn)
 print(toPrint)

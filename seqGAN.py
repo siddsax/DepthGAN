@@ -53,10 +53,10 @@ model2 = create_model(opt)
 model2.setup(opt)
 models['BtoA'] = model2
 
-opt.niter = 20
-opt.niter_decay = 20
-# opt.niter = 100
-# opt.niter_decay = 100
+#opt.niter = 20
+#opt.niter_decay = 20
+opt.niter = 100
+opt.niter_decay = 100
 opt.continue_train=0
 file = open("Errors_" + opt.name + ".txt", "w+")
 for i in range(numFiles):
