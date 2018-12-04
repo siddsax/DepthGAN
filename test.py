@@ -6,6 +6,8 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 import torch
+from util.visualizer import Visualizer
+
 def updateLosses(model, phase, arr=None, div=None, file=None):
     if div is None:
         if arr is None:
@@ -23,10 +25,15 @@ def updateLosses(model, phase, arr=None, div=None, file=None):
         return arr/div
 
 def test(opt, model, file=None):
-    phases = ['test', 'train']
+    oldDid = opt.display_id
+    oldNF = opt.no_flip
+    opt.display_id = oldDid + 2
+    phases = ['test']#, 'train']
     opt.no_flip = True
+    visualizer = Visualizer(opt)
     a, b = opt.loadSize_1, opt.loadSize_2
     opt.loadSize_1, opt.loadSize_2 = opt.fineSize_1, opt.fineSize_2
+    model.opt = opt
     for phase in phases:
         opt.phase = phase
         if(phase == 'test'):
@@ -47,6 +54,7 @@ def test(opt, model, file=None):
             model.set_input(data)
             model.test()
             model.findEvalLosses()
+            visualizer.display_current_results(model.get_current_visuals(), 0, 0)
             if(torch.__version__ != '0.3.0.post4'):
                 visuals = model.get_current_visuals()
                 img_path = model.get_image_paths()
@@ -59,8 +67,11 @@ def test(opt, model, file=None):
             arrT = updateLosses(model, phase, arr, div, file=file)
         else:
             updateLosses(model, phase, arr, div, file=file)
-    opt.no_flip = False
+    opt.phase = 'train'
+    opt.display_id = oldDid
+    opt.no_flip = oldNF
     opt.loadSize_1, opt.loadSize_2 = a, b
+    model.opt = opt
     return arrT
 if __name__ == '__main__':
 

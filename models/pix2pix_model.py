@@ -162,14 +162,21 @@ class Pix2PixModel(BaseModel):
     #     t2 = (t1*t1).mean()
     #     return t2
 
-    def RootMeanSquaredError(self):
-    	d = (self.fake_B - self.real_B)*10.0/2 # see util.util tensor2im, 10 is to scale to meters, not needed in cases its canceled out
+    def RootMeanSquaredError(self, imgGT=None, imgOut=None):
+        if imgGT is not None:
+            d = (imgOut - imgGT)*10.0/2
+        else:
+            d = (self.fake_B - self.real_B)*10.0/2 # see util.util tensor2im, 10 is to scale to meters, not needed in cases its canceled out
         diff = torch.sqrt(torch.mean(d * d))
         return diff
 
-    def AbsoluteRelativeDifference(self):
-        output = (self.fake_B + 1.0)/2
-        gt = (self.real_B + 1.0)/2
+    def AbsoluteRelativeDifference(self, imgGT=None, imgOut=None):
+        if imgGT is not None:
+            output = (imgOut + 1.0)/2
+            gt = (imgGT + 1.0)/2
+        else:
+            output = (self.fake_B + 1.0)/2
+            gt = (self.real_B + 1.0)/2
         diff = torch.mean(torch.abs(output - gt) / gt)
         return diff
 
@@ -180,30 +187,21 @@ class Pix2PixModel(BaseModel):
         diff = torch.mean((d * d) / gt)
         return diff
 
-    def Threshold(self, threshold):
-        output = (self.fake_B.data.cpu().numpy() + 1.0)/2 # convert to 0-1
-        gt = (self.real_B.data.cpu().numpy() + 1.0)/2
+    def Threshold(self, threshold, imgGT=None, imgOut=None):
+        if imgGT is not None:
+            gt, output = (imgGT.data.cpu().numpy()+ 1.0)/2, (imgOut.data.cpu().numpy()+ 1.0)/2
+        else:
+            gt, output = (self.fake_B.data.cpu().numpy() + 1.0)/2, (self.real_B.data.cpu().numpy() + 1.0)/2
+
         output = np.maximum(output, 1.0 / 255.0) # remove elements = 0
         gt = np.maximum(gt, 1.0 / 255.0)
         output = output*10.0 #conversion to meters "needed"
         gt = gt*10.0
-
         bb = np.maximum(output / gt, gt / output)
-        # import pdb
-        # pdb.set_trace()
         kk = np.argwhere(np.maximum(output / gt, gt / output) < threshold)
         withinThresholdCount = len(kk)
-        # print(withinThresholdCount)
-        # print(gt.size)
-        # print(gt.shape)
         return (withinThresholdCount / float(gt.size))
 
-        # if len(self.opt.gpu_ids) > 0 and torch.cuda.is_available():
-        #     output = torch.max(output, torch.cuda.FloatTensor([1.0 / 255.0])).data
-        #     gt = torch.max(gt, torch.cuda.FloatTensor([1.0 / 255.0])).data
-        # else:
-        #     gt = torch.max(gt, torch.FloatTensor([1.0 / 255.0])).data
-        #     output = torch.max(output, torch.FloatTensor([1.0 / 255.0])).data
 
     # def LogDepth(depth):
     #     depth = np.maximum(depth, 1.0 / 255.0)	
@@ -253,6 +251,21 @@ class Pix2PixModel(BaseModel):
         self.evalLossesNames = ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3']
         # -----------------------------------------------------------------
 
+    def findCustomLosses(self, imgOut, imgGT):
+        try:
+            a, b = self.real_B, self.fake_B
+        except:
+            a, b = 0, 0
+        imgGT = 2*Variable(torch.from_numpy(imgGT)).float()/255.0 - 1
+        imgOut = 2*Variable(torch.from_numpy(imgOut)).float()/255.0 - 1
+        if torch.cuda.is_available():
+            imgGT, imgOut = imgGT.cuda(), imgOut.cuda() 
+        loss_G_rmse = np.array(self.RootMeanSquaredError(imgGT, imgOut).data)
+        loss_G_rel = np.array(self.AbsoluteRelativeDifference(imgGT, imgOut).data)
+        loss_G_t_1 = self.Threshold(1.25, imgGT, imgOut)
+        loss_G_t_2 = self.Threshold(1.25*1.25, imgGT, imgOut)
+        loss_G_t_3 = self.Threshold(1.25*1.25*1.25, imgGT, imgOut)
+        return [loss_G_rmse, loss_G_rel, loss_G_t_1, loss_G_t_2, loss_G_t_3], ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3']
     def backward_G(self):
         # First, G(A) should fake the discriminator
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)
