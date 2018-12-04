@@ -29,8 +29,8 @@ if not os.path.exists(opt.dataroot + "/seq/train"):
     os.makedirs(opt.dataroot + "/seq/train")
 if not os.path.exists(opt.dataroot + "/seq/test"):
     os.makedirs(opt.dataroot + "/seq/test")
-if not os.path.exists(opt.dataroot + "/seq/result_" + opt.name):
-    os.makedirs(opt.dataroot + "/seq/result_" + opt.name)
+if not os.path.exists(opt.dataroot + "/seq/result"):
+    os.makedirs(opt.dataroot + "/seq/result")
 
 dFiles1 = [f for f in listdir(opt.dataroot + '/seq/D1') if isfile(join(opt.dataroot + '/seq/D1', f))]
 dFiles2 = [f for f in listdir(opt.dataroot + '/seq/D2') if isfile(join(opt.dataroot + '/seq/D2', f))]
@@ -53,8 +53,6 @@ model2 = create_model(opt)
 model2.setup(opt)
 models['BtoA'] = model2
 
-#opt.niter = 20
-#opt.niter_decay = 20
 opt.niter = 100
 opt.niter_decay = 100
 opt.continue_train=0
