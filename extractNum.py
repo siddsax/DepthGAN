@@ -70,6 +70,3 @@ for i in range(5):
     Org = Origlosses[:,i].mean()
     toPrint += "{} Orgl {} wtO {} wO {}\n".format(names[i], Org, RMSEmnwO, RMSEmn)
 print(toPrint)
-# print(RMSEmnwO)
-# plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
-# plt.show()
