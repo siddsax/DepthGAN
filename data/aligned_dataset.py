@@ -51,12 +51,8 @@ class AlignedDataset(BaseDataset):
 
         A = A[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
         B = B[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
-        # print(A.shape)
-        # print(B.shape)
-        # print(self.opt.fineSize_1)
-        # print(self.opt.fineSize_2)
-        # print("+===================")
-        # exit()
+
+
         A = 2*(A) - 1#transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A)
         B = 2*(B) - 1#transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(B)
         # print("Amax {}".format(A.max()))

@@ -21,11 +21,9 @@ def train(opt, model):
         epoch_iter = 0
 
         for i, data in enumerate(dataset):
-            visualizer.reset()
             total_steps += opt.batchSize
             epoch_iter += opt.batchSize
             iter_start_time = time.time()
-
             model.set_input(data)
             model.optimize_parameters()
             iter_data_time = time.time()
@@ -45,14 +43,15 @@ def train(opt, model):
             if total_steps % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_steps))
                 model.save_networks('latest')
-            # if total_steps % opt.test_freq == 0 and (opt.niter + opt.niter_decay + 1 - opt.epoch_count - epoch):
-            #     test(opt, model=model, file=f)
-            #     f.close()
-            #     f = open('test_acc_' + opt.name, 'a')
-            #     model.train()
+            if total_steps % opt.test_freq == 0 and (opt.niter + opt.niter_decay + 1 - opt.epoch_count - epoch):
+                test(opt, model=model, file=f)
+                f.close()
+                f = open('test_acc_' + opt.name, 'a')
+                model.train()
         total_steps += 1
         model.update_learning_rate()
         if epoch % opt.save_epoch_freq == 0:
+            visualizer.reset()
             model.save_networks('latest')
             model.save_networks(epoch)
             print("++++ End of {} Epochs with lr {} ++++".format(epoch, model.optimizers[0].param_groups[0]['lr']))

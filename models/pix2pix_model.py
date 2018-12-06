@@ -5,7 +5,8 @@ from torch.autograd import Variable
 from . import networks
 import pdb
 import numpy as np
-
+from skimage.measure import compare_ssim as ssim
+import pytorch_ssim
 class Pix2PixModel(BaseModel):
     def name(self):
         return 'Pix2PixModel'
@@ -230,6 +231,13 @@ class Pix2PixModel(BaseModel):
         error = torch.abs(diffAlpha*( 2*absAlpha - diffAlpha)*.5)
         return error.mean()
 
+    def SSIM(self):
+        output = (self.fake_B + 1.0)/2
+        gt = (self.real_B + 1.0)/2
+        ssim_loss = pytorch_ssim.SSIM(window_size = 11)
+        error = ssim_loss(gt, output).data.cpu().numpy()#ssim(gt, output, data_range=1, multichannel=True)
+        return error
+
     def L1(self):
         return self.criterionL1(self.fake_B, self.real_B)
 
@@ -247,8 +255,9 @@ class Pix2PixModel(BaseModel):
         self.loss_G_t_1 = self.Threshold(1.25)
         self.loss_G_t_2 = self.Threshold(1.25*1.25)
         self.loss_G_t_3 = self.Threshold(1.25*1.25*1.25)
-        self.evalLosses = [self.loss_G_rmse, self.loss_G_rel, self.loss_G_t_1, self.loss_G_t_2, self.loss_G_t_3]
-        self.evalLossesNames = ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3']
+        self.loss_ssim = self.SSIM()
+        self.evalLosses = [self.loss_G_rmse, self.loss_G_rel, self.loss_G_t_1, self.loss_G_t_2, self.loss_G_t_3, self.loss_ssim]
+        self.evalLossesNames = ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3', 'SSIM']
         # -----------------------------------------------------------------
 
     def findCustomLosses(self, imgOut, imgGT):
@@ -265,7 +274,10 @@ class Pix2PixModel(BaseModel):
         loss_G_t_1 = self.Threshold(1.25, imgGT, imgOut)
         loss_G_t_2 = self.Threshold(1.25*1.25, imgGT, imgOut)
         loss_G_t_3 = self.Threshold(1.25*1.25*1.25, imgGT, imgOut)
-        return [loss_G_rmse, loss_G_rel, loss_G_t_1, loss_G_t_2, loss_G_t_3], ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3']
+        loss_ssim = self.ssim()
+
+        return [loss_G_rmse, loss_G_rel, loss_G_t_1, loss_G_t_2, loss_G_t_3, loss_ssim], ['RMSE', 'Rel', 'Thresh1', 'Thresh2', 'Thresh3', 'SSIM']
+
     def backward_G(self):
         # First, G(A) should fake the discriminator
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)

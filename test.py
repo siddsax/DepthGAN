@@ -36,9 +36,7 @@ def test(opt, model, file=None):
     model.opt = opt
     for phase in phases:
         opt.phase = phase
-        if(phase == 'test'):
-            opt.how_many = 1000
-        else:
+        if(phase != 'test'):
             opt.how_many = 20
         data_loader = CreateDataLoader(opt)
         dataset = data_loader.load_data()

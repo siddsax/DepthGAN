@@ -50,7 +50,8 @@ class BaseOptions():
         parser.add_argument('--loss2', type=int, default=0, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', type=int, default=1, help='no dropout for the generator')
         parser.add_argument('--no_flip', type=int, default=1, help='if specified, do not flip the images for data augmentation')
-	self.initialized = True
+        parser.add_argument('--display_ncols', type=int, default=4, help='if positive, display all images in a single visdom web panel with certain number of images per row.')
+        self.initialized = True
         return parser
 
     def gather_options(self):
