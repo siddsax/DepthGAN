@@ -50,7 +50,7 @@ def train(opt, model):
             #     f.close()
             #     f = open('test_acc_' + opt.name, 'a')
             #     model.train()
-
+        total_steps += 1
         model.update_learning_rate()
         if epoch % opt.save_epoch_freq == 0:
             model.save_networks('latest')
