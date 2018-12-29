@@ -8,6 +8,10 @@ from util import html
 import torch
 from util.visualizer import Visualizer
 
+import sys
+sys.path.append('data')
+from aligned_dataset import *
+
 def updateLosses(model, phase, arr=None, div=None, file=None):
     if div is None:
         if arr is None:
@@ -38,8 +42,9 @@ def test(opt, model, file=None):
         opt.phase = phase
         if(phase != 'test'):
             opt.how_many = 20
-        data_loader = CreateDataLoader(opt)
-        dataset = data_loader.load_data()
+        # data_loader = CreateDataLoader(opt)
+        # dataset = data_loader.load_data()
+        dataset =  torch.utils.data.DataLoader(Make3D(opt, train=False), batch_size=1)
         # create website
         web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
         webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))

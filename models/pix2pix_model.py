@@ -61,7 +61,7 @@ class Pix2PixModel(BaseModel):
                                           opt.which_model_netD,
                                           opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        self.upsample = torch.nn.UpsamplingBilinear2d(size = (480,640))
+        self.upsample = torch.nn.UpsamplingBilinear2d(size = (460, 345))
         self.criterionL1 = torch.nn.L1Loss()
         
         if self.isTrain:
@@ -114,8 +114,9 @@ class Pix2PixModel(BaseModel):
             self.real_B = Variable(self.input_B, volatile=True)
         else:
             self.fake_B = self.netG(self.real_A)
-        self.real_A = self.upsample(self.real_A)
-        self.real_B = self.upsample(self.real_B)
+
+        # self.real_A = self.upsample(self.real_A)
+        # self.real_B = self.upsample(self.real_B)
         self.fake_B = self.upsample(self.fake_B)
     def backward_D(self):
         # Fake
@@ -245,9 +246,9 @@ class Pix2PixModel(BaseModel):
         return torch.nn.functional.mse_loss(self.fake_B, self.real_B)
 
     def findEvalLosses(self):
-        self.real_A = self.upsample(self.real_A)
-        self.real_B = self.upsample(self.real_B)
-        self.fake_B = self.upsample(self.fake_B)
+        # self.real_A = self.upsample(self.real_A)
+        # self.real_B = self.upsample(self.real_B)
+        # self.fake_B = self.upsample(self.fake_B)
         # --------- eval losses ------ no lambda ------------------------
         self.loss_G_rmse = np.array(self.RootMeanSquaredError().data)
         self.loss_G_rel = np.array(self.AbsoluteRelativeDifference().data)

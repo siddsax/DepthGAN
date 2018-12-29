@@ -5,13 +5,18 @@ from models import create_model
 from util.visualizer import Visualizer
 from test import test
 import pdb
+import sys
+sys.path.append('data')
+from aligned_dataset import *
+
 def train(opt, model):
     l1 = 0
     flg = 0
     model.opt = opt
-    data_loader = CreateDataLoader(opt)
-    dataset = data_loader.load_data()
-    dataset_size = len(data_loader)
+    # data_loader = CreateDataLoader(opt)
+    # dataset = data_loader.load_data()
+    dataset =  torch.utils.data.DataLoader(Make3D(opt), batch_size=opt.batchSize, shuffle=True)
+    dataset_size = len(dataset)*opt.batchSize
     visualizer = Visualizer(opt)
     total_steps = 0
     f = open('test_acc_' + opt.name, 'w')
@@ -60,6 +65,8 @@ def train(opt, model):
 if __name__ == '__main__':
 
   opt = TrainOptions().parse()
+  print(opt)
+  exit()
   model = create_model(opt)
   model.setup(opt)
   train(opt, model)

@@ -8,6 +8,8 @@ from PIL import Image
 import random
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+import cv2
+import scipy.io
 
 class AlignedDataset(BaseDataset):
     @staticmethod
@@ -91,3 +93,68 @@ class AlignedDataset(BaseDataset):
 
     def name(self):
         return 'AlignedDataset'
+
+class Make3D(torch.utils.data.Dataset):
+    def __init__(self, opt, train=True):
+        self.train = train
+        self.opt = opt
+
+        if train:
+            self.RGB, self.Depth = scipy.io.loadmat('datasets/make3D/trainSet.mat')['trainSet'][0][0]
+        else:
+            self.RGB, self.Depth  = scipy.io.loadmat('datasets/make3D/testSet.mat')['testSet'][0][0]
+        
+        Depth = np.zeros((self.Depth.shape[2], 3, self.Depth.shape[0], self.Depth.shape[1] ))
+        for i in range(self.Depth.shape[-1]):
+            for j in range(3):
+                Depth[i,j] = self.Depth[:,:,i]
+
+        self.Depth = Depth
+        self.transform = get_transform(opt)
+        self.RGB = np.transpose(self.RGB, (3, 2, 0, 1))
+
+    def __len__(self):
+        return self.Depth.shape[0]
+
+    def __getitem__(self, index):
+        A = RGB[index]
+        B = Depth[index]
+
+        if self.opt.isTrain and not self.opt.no_flip:
+            transform = transforms.RandomHorizontalFlip()
+            seed = random.randint(0,2**32)
+            random.seed(seed)
+            A = transform(A)
+            random.seed(seed)
+            B = transform(B)
+
+        A = transforms.ToTensor()(A)
+        B = transforms.ToTensor()(B)
+
+        w_offset = random.randint(0, max(0, self.opt.loadSize_1 - self.opt.fineSize_1 - 1))
+        h_offset = random.randint(0, max(0, self.opt.loadSize_2 - self.opt.fineSize_2 - 1))
+
+        A = A[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
+        B = B[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
+
+        A = 2*(A) - 1
+        B = 2*(B) - 1
+
+        if self.opt.which_direction == 'BtoA':
+            input_nc = self.opt.output_nc
+            output_nc = self.opt.input_nc
+        else:
+            input_nc = self.opt.input_nc
+            output_nc = self.opt.output_nc
+
+        if (not self.opt.no_flip) and random.random() < 0.5:
+            idx = [i for i in range(A.size(2) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            A = A.index_select(2, idx)
+            B = B.index_select(2, idx)
+
+        return {'A': A, 'B': B,
+                'A_paths': AB_path, 'B_paths': AB_path}
+
+    def name(self):
+        return 'Make3D'
