@@ -75,9 +75,9 @@ class Pix2PixModel(BaseModel):
 
             # initialize optimizers
             self.optimizers = []
-            self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
+            self.optimizer_G = torch.optim.Adam(filter(lambda p: p.requires_grad,self.netG.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D = torch.optim.Adam(self.netD.parameters(),
+            self.optimizer_D = torch.optim.Adam(filter(lambda p: p.requires_grad,self.netD.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)

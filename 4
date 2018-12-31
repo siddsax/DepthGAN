@@ -413,11 +413,10 @@ class NLayerDiscriminator(nn.Module):
             sequence += [nn.Sigmoid()]
         self.sequence = sequence
         self.model = nn.Sequential(*sequence)
-        
+
     def forward(self, input):
-        
         for layer in self.sequence:
-       
+           print(layer)
            input = layer(input)
         
         return input#self.model(input)
