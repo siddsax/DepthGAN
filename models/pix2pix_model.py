@@ -114,7 +114,7 @@ class Pix2PixModel(BaseModel):
             self.real_B = Variable(self.input_B, volatile=True)
         else:
             self.fake_B = self.netG(self.real_A)
-
+        
         # self.real_A = self.upsample(self.real_A)
         # self.real_B = self.upsample(self.real_B)
         self.fake_B = self.upsample(self.fake_B)
@@ -165,17 +165,19 @@ class Pix2PixModel(BaseModel):
     #     return t2
 
     def RootMeanSquaredError(self, imgGT=None, imgOut=None):
+        
         if imgGT is not None:
             d = (imgOut - imgGT)*10.0/2
-        else:
-            d = (self.fake_B - self.real_B)*10.0/2 # see util.util tensor2im, 10 is to scale to meters, not needed in cases its canceled out
+        else: 
+            d = (self.fake_B - self.real_B)*80.0/2 # see util.util tensor2im, 10 is to scale to meters, not needed in cases its canceled out
+       
         diff = torch.sqrt(torch.mean(d * d))
         return diff
 
     def AbsoluteRelativeDifference(self, imgGT=None, imgOut=None):
         if imgGT is not None:
-            output = (imgOut + 1.0)/2
-            gt = (imgGT + 1.0)/2
+            output = (imgOut + 1.0 + 1e-5)/2
+            gt = (imgGT + 1.0 + 1e-5)/2
         else:
             output = (self.fake_B + 1.0)/2
             gt = (self.real_B + 1.0)/2
@@ -294,10 +296,8 @@ class Pix2PixModel(BaseModel):
 
         self.findEvalLosses()
 
-
-        self.loss_G = self.loss_G_GAN
         if(self.opt.loss2==0):
-            self.loss_G = self.loss_G_L1 + self.loss_G_GAN
+            self.loss_G = self.loss_G_L2 + self.loss_G_GAN
         elif(self.opt.loss2==1):
             print("******* issue in log_func, not resolved*************")
             exit()
@@ -307,10 +307,7 @@ class Pix2PixModel(BaseModel):
         elif(self.opt.loss2==3):
             self.loss_G = self.loss_G_berHu + self.loss_G_GAN
         elif(self.opt.loss2==4):
-            if self.opt.which_model_netG != 'Gen_depth':
-                self.loss_G = self.loss_G_L2 + self.loss_G_GAN
-            else:
-                self.loss_G = self.loss_G_L2
+            self.loss_G = self.loss_G_L1 + self.loss_G_GAN 
         self.loss_G.backward()
 
 

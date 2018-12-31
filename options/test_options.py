@@ -4,6 +4,7 @@ from .base_options import BaseOptions
 class TestOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)
+        parser.add_argument('--display_freq', type=int, default=10, help='# of test examples.')
         parser.add_argument('--ntest', type=int, default=float("inf"), help='# of test examples.')
         parser.add_argument('--results_dir', type=str, default='./results/', help='saves results here.')
         parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')

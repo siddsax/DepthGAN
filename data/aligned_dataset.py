@@ -1,3 +1,4 @@
+import numpy as np
 import os.path
 import random
 import torchvision.transforms as transforms
@@ -103,39 +104,51 @@ class Make3D(torch.utils.data.Dataset):
             self.RGB, self.Depth = scipy.io.loadmat('datasets/make3D/trainSet.mat')['trainSet'][0][0]
         else:
             self.RGB, self.Depth  = scipy.io.loadmat('datasets/make3D/testSet.mat')['testSet'][0][0]
-        
-        Depth = np.zeros((self.Depth.shape[2], 3, self.Depth.shape[0], self.Depth.shape[1] ))
+            #import pdb;pdb.set_trace() 
+        Depth = np.zeros((self.Depth.shape[2], 1, self.Depth.shape[0], self.Depth.shape[1] ))
         for i in range(self.Depth.shape[-1]):
-            for j in range(3):
-                Depth[i,j] = self.Depth[:,:,i]
+            for j in range(1):
+               Depth[i,j] = self.Depth[:,:,i]
 
-        self.Depth = Depth
+        self.Depth = Depth#/80.0
         self.transform = get_transform(opt)
-        self.RGB = np.transpose(self.RGB, (3, 2, 0, 1))
+        self.RGB = np.transpose(self.RGB, (3, 2, 0, 1))#/255.0
 
     def __len__(self):
         return self.Depth.shape[0]
 
     def __getitem__(self, index):
-        A = RGB[index]
-        B = Depth[index]
+        A = torch.from_numpy(np.transpose(self.RGB[index], (1, 2, 0)))
+        B = torch.from_numpy(np.transpose(self.Depth[index], (1, 2, 0)))
+        
+        A = np.transpose(A, (2, 0, 1))
+        B = np.transpose(B, (2, 0, 1))
+        #print(A.shape, B.shape)
+        #if self.opt.isTrain and not self.opt.no_flip:
+        #    transform = transforms.RandomHorizontalFlip()
+        #    seed = random.randint(0,2**32)
+        #    random.seed(seed)
+        #    print(A.shape)
+        #    print("="*100)
+        #    A = transform(A)
+        #    random.seed(seed)
+        #    B = transform(B)
 
-        if self.opt.isTrain and not self.opt.no_flip:
-            transform = transforms.RandomHorizontalFlip()
-            seed = random.randint(0,2**32)
-            random.seed(seed)
-            A = transform(A)
-            random.seed(seed)
-            B = transform(B)
 
-        A = transforms.ToTensor()(A)
-        B = transforms.ToTensor()(B)
+        #A = transforms.ToTensor()(A)
+        #B = transforms.ToTensor()(B)
+       
+      
+        A = A.type(torch.FloatTensor)
+        B = B.type(torch.FloatTensor) 
+        A = A/255
+        B = B/81.92136
+       
+        #w_offset = random.randint(0, max(0, self.opt.loadSize_1 - self.opt.fineSize_1 - 1))
+        #h_offset = random.randint(0, max(0, self.opt.loadSize_2 - self.opt.fineSize_2 - 1))
 
-        w_offset = random.randint(0, max(0, self.opt.loadSize_1 - self.opt.fineSize_1 - 1))
-        h_offset = random.randint(0, max(0, self.opt.loadSize_2 - self.opt.fineSize_2 - 1))
-
-        A = A[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
-        B = B[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
+        #A = A[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
+        #B = B[:, h_offset:h_offset + self.opt.fineSize_2, w_offset:w_offset + self.opt.fineSize_1]
 
         A = 2*(A) - 1
         B = 2*(B) - 1
@@ -152,9 +165,11 @@ class Make3D(torch.utils.data.Dataset):
             idx = torch.LongTensor(idx)
             A = A.index_select(2, idx)
             B = B.index_select(2, idx)
-
-        return {'A': A, 'B': B,
-                'A_paths': AB_path, 'B_paths': AB_path}
+ 
+        #if self.train == False:
+        #   import pdb;pdb.set_trace()
+        return {'A': A, 'B': B, 'A_paths': 'NA', 'B_paths': 'NA'}
+             
 
     def name(self):
         return 'Make3D'

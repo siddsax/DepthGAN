@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
   opt = TrainOptions().parse()
   print(opt)
-  exit()
+  
   model = create_model(opt)
   model.setup(opt)
   train(opt, model)

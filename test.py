@@ -40,8 +40,8 @@ def test(opt, model, file=None):
     model.opt = opt
     for phase in phases:
         opt.phase = phase
-        if(phase != 'test'):
-            opt.how_many = 20
+        
+       
         # data_loader = CreateDataLoader(opt)
         # dataset = data_loader.load_data()
         dataset =  torch.utils.data.DataLoader(Make3D(opt, train=False), batch_size=1)
@@ -57,10 +57,12 @@ def test(opt, model, file=None):
             model.set_input(data)
             model.test()
             model.findEvalLosses()
-            visualizer.display_current_results(model.get_current_visuals(), 0, 0)
+            if i % opt.display_freq == 0:
+              visualizer.display_current_results(model.get_current_visuals(), 0, 0)
             if(torch.__version__ != '0.3.0.post4'):
                 visuals = model.get_current_visuals()
                 img_path = model.get_image_paths()
+                
                 save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
             arr = updateLosses(model, phase) if i==0  else updateLosses(model, phase, arr=arr)
             # i = 5 if a > 7 else 0
